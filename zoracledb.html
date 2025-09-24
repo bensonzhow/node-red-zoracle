@@ -1,6 +1,6 @@
 <!-- Oracle-SERVER - CONFIG ----------------------------------------------------->
 
-<script type="text/x-red" data-template-name="zoracle-server">
+<script type="text/x-red" data-template-name="zoracleserver">
     <div class="form-row">
         <ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="node-config-oracle-server-tabs"></ul>
     </div>
@@ -66,7 +66,7 @@
         </div>
     </div>
 </script>
-<script type="text/x-red" data-help-name="zoracle-server">
+<script type="text/x-red" data-help-name="zoracleserver">
     <p>Configures the connection to your Oracle Database. Using a connection pool is highly recommended for stability.</p>
     
     <h3>Connection Properties</h3>
@@ -209,7 +209,7 @@
 //
 // -- oracle server --------------------------------------------------------------------------------
 //
-RED.nodes.registerType("zoracle-server", {
+RED.nodes.registerType("zoracleserver", {
     category: "config",
     defaults: {
         connectionname: { value: "", required: false },
@@ -287,7 +287,7 @@ RED.nodes.registerType("zoracledb", {
                 "\n\t\"location.of.second.array.index.field\"," +
                 "\n\t\"last_array_indexfield.in[3]\"" +
                 "\n]" },
-        server: { type: "oracle-server", required: false },
+        server: { type: "zoracleserver", required: false },
         resultaction: { value: "multi" },
         resultlimit: { value: 100 }
     },

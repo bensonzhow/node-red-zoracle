@@ -1,8 +1,10 @@
-[![Node.js Package](https://github.com/vtulluru/node-red-contrib-oracledb-mod/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/vtulluru/node-red-contrib-oracledb-mod/actions/workflows/npm-publish.yml)
+
 
   
 
 # node-red-zoracledb
+
+![node-red-zoracledb](images/image.png)
 
 ```javascript
 msg.oracleConfig = {

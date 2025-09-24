@@ -132,7 +132,7 @@ module.exports = function (RED) {
         });
         initialize(node);
     }
-    function zoracleServer(n) {
+    function zoracleserver(n) {
         const node = this;
         RED.nodes.createNode(node, n);
         node.connectionname = n.connectionname || "";
@@ -303,7 +303,7 @@ module.exports = function (RED) {
         };
     }
     RED.nodes.registerType("zoracledb", zoracledb);
-    RED.nodes.registerType("zoracle-server", zoracleServer, {
+    RED.nodes.registerType("zoracleserver", zoracleserver, {
         credentials: { user: { type: "text" }, password: { type: "password" } }
     });
 };

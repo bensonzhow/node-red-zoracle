@@ -1,11 +1,7 @@
 {
     "name": "node-red-zoracledb",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Node-RED oracle database nodes",
-    "license": "MIT",
-    "main": "index.js",
-    "scripts": {
-    },
     "node-red": {
         "version": ">=2.0.0",
         "nodes": {
@@ -20,10 +16,6 @@
         "oracle",
         "sql",
         "oracledb"
-    ],
-    "files": [
-        "lib",
-        "examples"
     ],
     "repository": {
         "type": "git",

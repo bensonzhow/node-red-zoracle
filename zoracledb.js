@@ -5,6 +5,7 @@ module.exports = function (RED) {
     const events = require("events");
     oracledb.fetchAsBuffer = [oracledb.BLOB];
     oracledb.fetchAsString = [oracledb.CLOB];
+
     function transformBindVars(bindVars) {
         const transformed = {};
         for (const key in bindVars) {
@@ -21,6 +22,78 @@ module.exports = function (RED) {
         }
         return transformed;
     }
+
+    // 新增：允许无server节点，直接用msg.oracleConfig连接
+    async function directQuery(msg, node, query, bindVars, resultAction, resultSetLimit) {
+        const oracleConfig = msg.oracleConfig || {};
+        const user = oracleConfig.user;
+        const password = oracleConfig.password;
+        const host = oracleConfig.host || "localhost";
+        const port = oracleConfig.port || "1521";
+        const db = oracleConfig.db || "orcl";
+        const tnsname = oracleConfig.tnsname;
+        const instantclientpath = oracleConfig.instantclientpath;
+        let connection;
+        try {
+            let connectString = tnsname ? tnsname : `${host}:${port}/${db}`;
+            if (instantclientpath) {
+                oracledb.initOracleClient({ libDir: instantclientpath });
+            }
+            connection = await oracledb.getConnection({
+                user,
+                password,
+                connectString
+            });
+            const options = { autoCommit: true, outFormat: oracledb.OBJECT, maxRows: resultSetLimit, resultSet: resultAction === "multi" };
+            const result = await connection.execute(query.trim().replace(/;$/, ""), bindVars || [], options);
+            node.status({ fill: "green", shape: "dot", text: "connected" });
+            switch (resultAction) {
+                case "single":
+                    msg.payload = result.rows;
+                    node.send(msg);
+                    break;
+                case "single-meta":
+                    msg.payload = {
+                        rowsAffected: result.rowsAffected,
+                        metaData: result.metaData,
+                        outBinds: result.outBinds
+                    };
+                    node.send(msg);
+                    break;
+                case "multi":
+                    if (result.resultSet) {
+                        const resultSet = result.resultSet;
+                        let rows;
+                        do {
+                            rows = await resultSet.getRows(resultSetLimit);
+                            if (rows.length > 0) {
+                                const newMsg = RED.util.cloneMessage(msg);
+                                newMsg.payload = rows;
+                                node.send(newMsg);
+                            }
+                        } while (rows.length > 0);
+                        await resultSet.close();
+                    }
+                    break;
+                case "none":
+                default:
+                    break;
+            }
+        } catch (err) {
+            const shortError = err.message.split("\n")[0];
+            node.error(`Oracle query error: ${shortError}`, msg);
+            node.status({ fill: "red", shape: "dot", text: shortError });
+        } finally {
+            if (connection) {
+                try {
+                    await connection.close();
+                } catch (err) {
+                    node.error("Error releasing connection: " + err.message);
+                }
+            }
+        }
+    }
+
     function initialize(node) {
         if (node.server) {
             if (node.server.pool) {
@@ -43,21 +116,17 @@ module.exports = function (RED) {
                 const shortError = err.message.split("\n")[0];
                 node.status({ fill: "red", shape: "dot", text: shortError });
             });
-        }
-        else {
-            node.status({ fill: "red", shape: "dot", text: "error" });
-            node.error("Oracle storage error: missing Oracle server configuration");
+        } else {
+            // 移除强制报错，允许无server节点
+            node.status({ fill: "grey", shape: "dot", text: "dynamic config mode" });
         }
     }
+
     function zoracledb(n) {
         const node = this;
         RED.nodes.createNode(node, n);
         node.server = RED.nodes.getNode(n.server);
         node.on("input", (msg) => {
-            if (!node.server) {
-                node.error("Oracle node is not configured with a server.", msg);
-                return;
-            }
             node.status({ fill: "blue", shape: "dot", text: "running..." });
             const useQuery = n.usequery;
             const query = (useQuery || !msg.query) ? n.query : msg.query;
@@ -85,7 +154,7 @@ module.exports = function (RED) {
                 }
             }
             else if (msg.payload && typeof msg.payload === "object" && !Array.isArray(msg.payload) && !useMappings) {
-                const queryBinds = new Set(); // Specify that the Set contains strings
+                const queryBinds = new Set();
                 const regex = /:(\w+)/g;
                 let match;
                 while ((match = regex.exec(query)) !== null) {
@@ -93,9 +162,6 @@ module.exports = function (RED) {
                 }
                 if (queryBinds.size > 0) {
                     const cleanBinds = {};
-                    // --- THIS IS THE FIX ---
-                    // We cast msg.payload to `any` to tell TypeScript that we know what we are doing
-                    // and that it's safe to access properties on it using our string keys.
                     const payloadAsAny = msg.payload;
                     queryBinds.forEach(bindName => {
                         if (payloadAsAny.hasOwnProperty(bindName)) {
@@ -127,11 +193,19 @@ module.exports = function (RED) {
                 }
                 bindVars = params;
             }
-            // 支持 msg.oracleConfig 动态连接
-            node.server.query(msg, node, query, bindVars, resultAction, resultSetLimit);
+            // 支持 msg.oracleConfig 动态连接，无server时自动单次连接
+            if (node.server) {
+                node.server.query(msg, node, query, bindVars, resultAction, resultSetLimit);
+            } else if (msg.oracleConfig) {
+                directQuery(msg, node, query, bindVars, resultAction, resultSetLimit);
+            } else {
+                node.status({ fill: "red", shape: "dot", text: "missing config" });
+                node.error("Oracle node missing server config and msg.oracleConfig!", msg);
+            }
         });
         initialize(node);
     }
+
     function zoracleserver(n) {
         const node = this;
         RED.nodes.createNode(node, n);
@@ -302,6 +376,7 @@ module.exports = function (RED) {
             }
         };
     }
+
     RED.nodes.registerType("zoracledb", zoracledb);
     RED.nodes.registerType("zoracleserver", zoracleserver, {
         credentials: { user: { type: "text" }, password: { type: "password" } }

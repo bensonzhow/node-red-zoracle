@@ -1,6 +1,6 @@
 {
     "name": "node-red-zoracledb",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "Node-RED oracle database nodes",
     "license": "MIT",
     "main": "index.js",
@@ -27,35 +27,16 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/vtulluru/node-red-contrib-oracledb-mod.git"
+        "url": "git+https://github.com/bensonzhow/node-red-zoracle.git"
     },
     "bugs": {
-        "url": "https://github.com/vtulluru/node-red-contrib-oracledb-mod/issues"
+        "url": "https://github.com/bensonzhow/node-red-zoracle/issues"
     },
-    "homepage": "https://github.com/vtulluru/node-red-contrib-oracledb-mod#readme",
+    "homepage": "https://github.com/bensonzhow/node-red-zoracle#readme",
     "dependencies": {
         "object-resolve-path": "^1.1.1",
         "oracledb": "^6.9.0"
     },
     "devDependencies": {
-        "@types/jquery": "^3.5.32",
-        "@types/mocha": "^10.0.10",
-        "@typescript-eslint/eslint-plugin": "^7.13.0",
-        "@typescript-eslint/parser": "^7.13.0",
-        "chai": "^4.3.10",
-        "del": "^8.0.0",
-        "dotenv": "^17.2.1",
-        "eslint": "^8.57.0",
-        "gulp": "^5.0.1",
-        "gulp-add-src": "^1.0.0",
-        "gulp-cli": "^3.1.0",
-        "gulp-concat": "^2.6.1",
-        "gulp-eslint-new": "^2.1.0",
-        "gulp-rename": "^2.1.0",
-        "gulp-sourcemaps": "^3.0.0",
-        "gulp-spawn-mocha": "^6.0.0",
-        "gulp-typescript": "^5.0.1",
-        "merge2": "^1.4.1",
-        "source-map-support": "^0.5.21"
     }
 }
